@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../viewmodels/session_viewmodel.dart';
 import '../widgets/custom_progress_bar.dart';
+import '../widgets/flash_card_widget.dart';
 import '../widgets/glass_container.dart';
 
 class SessionScreen extends GetView<SessionViewModel> {
@@ -118,77 +119,12 @@ class SessionScreen extends GetView<SessionViewModel> {
           ),
           SizedBox(height: 24.h),
 
-          ///------------------------------------ Main Card Placeholder Area (Interactive card body) ------------------------------------
           Expanded(
             child: currentCard == null
                 ? const Center(child: CircularProgressIndicator())
-                : GestureDetector(
-                    onTap: () => controller.toggleAnswer(),
-                    child: GlassContainer(
-                      width: double.infinity,
-                      hasGlow: true,
-                      glowColor: controller.showAnswer.value
-                          ? AppColors.primaryLight
-                          : AppColors.primary.withValues(alpha: 0.5),
-                      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ///------------------------------------ Card Type Label ------------------------------------
-                          Text(
-                            controller.showAnswer.value ? 'ANSWER' : 'QUESTION',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w800,
-                              color: controller.showAnswer.value
-                                  ? AppColors.primaryLight
-                                  : AppColors.textMuted,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          const Spacer(),
-                          ///------------------------------------ Content Text ------------------------------------
-                          SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              child: Text(
-                                controller.showAnswer.value
-                                    ? currentCard.answer
-                                    : currentCard.question,
-                                key: ValueKey<bool>(controller.showAnswer.value),
-                                style: controller.showAnswer.value
-                                    ? AppTextStyles.cardAnswer
-                                    : AppTextStyles.cardQuestion,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          ///------------------------------------ Flip Hint ------------------------------------
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.touch_app_outlined,
-                                size: 16.r,
-                                color: AppColors.textMuted,
-                              ),
-                              SizedBox(width: 6.w),
-                              Text(
-                                'TAP TO REVEAL',
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textMuted,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                : FlashCardWidget(
+                    key: ValueKey<String>(currentCard.id),
+                    flashCard: currentCard,
                   ),
           ),
           SizedBox(height: 24.h),

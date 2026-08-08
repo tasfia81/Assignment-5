@@ -11,7 +11,7 @@ class SessionViewModel extends GetxController {
   final RxList<FlashCard> knownCards = <FlashCard>[].obs;
   final RxList<FlashCard> needsPracticeCards = <FlashCard>[].obs;
   final RxBool isSessionFinished = false.obs;
-  final RxBool showAnswer = false.obs;
+
   
   // Timing
   late DateTime _startTime;
@@ -46,7 +46,6 @@ class SessionViewModel extends GetxController {
     knownCards.clear();
     needsPracticeCards.clear();
     isSessionFinished.value = false;
-    showAnswer.value = false;
     
     // Start timing
     _startTime = DateTime.now();
@@ -54,9 +53,6 @@ class SessionViewModel extends GetxController {
     _startTimer();
   }
 
-  void toggleAnswer() {
-    showAnswer.value = !showAnswer.value;
-  }
 
   void markAsKnown() {
     final card = currentCard;
@@ -75,7 +71,6 @@ class SessionViewModel extends GetxController {
   }
 
   void _nextCard() {
-    showAnswer.value = false;
     if (currentCardIndex.value < activeCards.length - 1) {
       currentCardIndex.value++;
     } else {
