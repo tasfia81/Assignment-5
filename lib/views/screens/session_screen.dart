@@ -7,9 +7,12 @@ import '../../viewmodels/session_viewmodel.dart';
 import '../widgets/custom_progress_bar.dart';
 import '../widgets/flash_card_widget.dart';
 import '../widgets/glass_container.dart';
+import '../widgets/swipeable_card.dart';
 
 class SessionScreen extends GetView<SessionViewModel> {
-  const SessionScreen({super.key});
+  final SwipeableCardController _swipeController = SwipeableCardController();
+
+  SessionScreen({super.key});
 
   String _formatDuration(Duration duration) {
     final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -43,7 +46,6 @@ class SessionScreen extends GetView<SessionViewModel> {
 
   ///------------------------------------ Active Session View (Cards, Progress, Swipe actions) ------------------------------------
   Widget _buildActiveSessionView() {
-    final currentCard = controller.currentCard;
     final total = controller.totalCardsCount;
     final index = controller.currentCardIndex.value;
     final knownCount = controller.knownCards.length;
@@ -120,12 +122,74 @@ class SessionScreen extends GetView<SessionViewModel> {
           SizedBox(height: 24.h),
 
           Expanded(
-            child: currentCard == null
-                ? const Center(child: CircularProgressIndicator())
-                : FlashCardWidget(
-                    key: ValueKey<String>(currentCard.id),
-                    flashCard: currentCard,
+            child: Obx(() {
+              final index = controller.currentCardIndex.value;
+              final cards = controller.activeCards;
+              if (cards.isEmpty || index >= cards.length) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final List<Widget> stackChildren = [];
+
+              // Underneath card 2 (deepest)
+              if (index + 2 < cards.length) {
+                stackChildren.add(
+                  Transform.translate(
+                    offset: Offset(0, 16.h),
+                    child: Transform.scale(
+                      scale: 0.90,
+                      child: Opacity(
+                        opacity: 0.5,
+                        child: FlashCardWidget(
+                          key: ValueKey<String>('${cards[index + 2].id}_bg2'),
+                          flashCard: cards[index + 2],
+                        ),
+                      ),
+                    ),
                   ),
+                );
+              }
+
+              // Underneath card 1 (middle)
+              if (index + 1 < cards.length) {
+                stackChildren.add(
+                  Transform.translate(
+                    offset: Offset(0, 8.h),
+                    child: Transform.scale(
+                      scale: 0.95,
+                      child: Opacity(
+                        opacity: 0.8,
+                        child: FlashCardWidget(
+                          key: ValueKey<String>('${cards[index + 1].id}_bg1'),
+                          flashCard: cards[index + 1],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              // Top card (swipeable)
+              final topCard = cards[index];
+              stackChildren.add(
+                SwipeableCard(
+                  key: ValueKey<String>('${topCard.id}_swipe'),
+                  controller: _swipeController,
+                  onSwipeLeft: () => controller.markAsNeedsPractice(),
+                  onSwipeRight: () => controller.markAsKnown(),
+                  child: FlashCardWidget(
+                    key: ValueKey<String>(topCard.id),
+                    flashCard: topCard,
+                  ),
+                ),
+              );
+
+              return Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: stackChildren,
+              );
+            }),
           ),
           SizedBox(height: 24.h),
 
@@ -135,7 +199,7 @@ class SessionScreen extends GetView<SessionViewModel> {
               ///------------------------------------ Needs Practice Button ------------------------------------
               Expanded(
                 child: _buildActionButton(
-                  onPressed: () => controller.markAsNeedsPractice(),
+                  onPressed: () => _swipeController.swipeLeft(),
                   label: 'Needs Practice',
                   icon: Icons.cancel_outlined,
                   color: AppColors.error,
@@ -146,7 +210,7 @@ class SessionScreen extends GetView<SessionViewModel> {
               ///------------------------------------ Known Button ------------------------------------
               Expanded(
                 child: _buildActionButton(
-                  onPressed: () => controller.markAsKnown(),
+                  onPressed: () => _swipeController.swipeRight(),
                   label: 'Known',
                   icon: Icons.check_circle_outline_rounded,
                   color: AppColors.success,

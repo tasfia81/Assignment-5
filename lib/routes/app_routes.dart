@@ -14,7 +14,7 @@ class AppRoutes {
     ),
     GetPage(
       name: session,
-      page: () => const SessionScreen(),
+      page: () => SessionScreen(),
       transition: Transition.rightToLeftWithFade,
       transitionDuration: const Duration(milliseconds: 300),
     ),
