@@ -21,6 +21,7 @@ class SwipeableCard extends StatefulWidget {
   final VoidCallback onSwipeLeft;
   final VoidCallback onSwipeRight;
   final SwipeableCardController? controller;
+  final ValueNotifier<double>? dragXNotifier;
 
   const SwipeableCard({
     super.key,
@@ -28,6 +29,7 @@ class SwipeableCard extends StatefulWidget {
     required this.onSwipeLeft,
     required this.onSwipeRight,
     this.controller,
+    this.dragXNotifier,
   });
 
   @override
@@ -67,7 +69,7 @@ class _SwipeableCardState extends State<SwipeableCard>
   }
 
   void _onOffsetChanged() {
-    // Rebuilds only the AnimatedBuilder layer (high performance)
+    widget.dragXNotifier?.value = _xController.value;
   }
 
   void swipeLeft() {

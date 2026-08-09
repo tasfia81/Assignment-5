@@ -54,19 +54,25 @@ class SessionViewModel extends GetxController {
   }
 
 
-  void markAsKnown() {
+  void markAsKnown(String cardId) {
+    if (isSessionFinished.value) return;
     final card = currentCard;
-    if (card != null) {
-      knownCards.add(card);
-      _nextCard();
+    if (card != null && card.id == cardId) {
+      if (!knownCards.any((c) => c.id == cardId) && !needsPracticeCards.any((c) => c.id == cardId)) {
+        knownCards.add(card);
+        _nextCard();
+      }
     }
   }
 
-  void markAsNeedsPractice() {
+  void markAsNeedsPractice(String cardId) {
+    if (isSessionFinished.value) return;
     final card = currentCard;
-    if (card != null) {
-      needsPracticeCards.add(card);
-      _nextCard();
+    if (card != null && card.id == cardId) {
+      if (!knownCards.any((c) => c.id == cardId) && !needsPracticeCards.any((c) => c.id == cardId)) {
+        needsPracticeCards.add(card);
+        _nextCard();
+      }
     }
   }
 
@@ -82,6 +88,7 @@ class SessionViewModel extends GetxController {
   void _finishSession() {
     _stopTimer();
     isSessionFinished.value = true;
+    Get.offNamed('/summary');
   }
 
   void restartFullDeck() {
