@@ -133,7 +133,42 @@ class SessionScreen extends GetView<SessionViewModel> {
 
                   final List<Widget> stackChildren = [];
 
-                  ///-------------------------------- Underneath card 2 (deepest) --------------------------------
+                  ///-------------------------------- Underneath card 3 (deepest) --------------------------------
+                  if (cardsIndex + 3 < cards.length) {
+                    stackChildren.add(
+                      ValueListenableBuilder<double>(
+                        valueListenable: dragXNotifier,
+                        builder: (context, dragX, child) {
+                          final double screenWidth = MediaQuery.of(context).size.width;
+                          final double threshold = screenWidth * 0.35;
+                          final double progress = (dragX.abs() / threshold).clamp(0.0, 1.0);
+
+                          ///---------------------------- Interpolate visual stack parameters --------------------------------
+                          final double scale = 0.85 + 0.05 * progress;
+                          final double yOffset = 24.h - 8.h * progress;
+                          final double opacity = 0.0 + 0.5 * progress;
+
+                          return Transform.translate(
+                            offset: Offset(0, yOffset),
+                            child: Transform.scale(
+                              scale: scale,
+                              child: Opacity(
+                                opacity: opacity,
+                                child: child,
+                              ),
+                            ),
+                          );
+                        },
+                        child: FlashCardWidget(
+                          key: ValueKey<String>('${cards[cardsIndex + 3].id}_bg3'),
+                          flashCard: cards[cardsIndex + 3],
+                          enableBlur: false, // Optimisation: disable blur for underneath card
+                        ),
+                      ),
+                    );
+                  }
+
+                  ///-------------------------------- Underneath card 2 (middle deepest) --------------------------------
                   if (cardsIndex + 2 < cards.length) {
                     stackChildren.add(
                       ValueListenableBuilder<double>(

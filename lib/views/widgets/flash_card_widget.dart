@@ -157,7 +157,7 @@ class _FlashCardWidgetState extends State<FlashCardWidget>
             flex: 8,
             child: Center(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 child: Text(
                   content,
                   style: contentStyle,

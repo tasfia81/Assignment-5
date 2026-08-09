@@ -74,12 +74,12 @@ class _SwipeableCardState extends State<SwipeableCard>
 
   void swipeLeft() {
     if (_isAnimating) return;
-    _runFlyOutAnimation(left: true, velocity: -800.0);
+    _runFlyOutAnimation(left: true, velocityX: -800.0, velocityY: 0.0);
   }
 
   void swipeRight() {
     if (_isAnimating) return;
-    _runFlyOutAnimation(left: false, velocity: 800.0);
+    _runFlyOutAnimation(left: false, velocityX: 800.0, velocityY: 0.0);
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -98,7 +98,7 @@ class _SwipeableCardState extends State<SwipeableCard>
     // Check haptic feedback condition
     final double screenWidth = MediaQuery.of(context).size.width;
     final double distanceThreshold = screenWidth * 0.35;
-    final bool isPastThreshold = _xController.value.abs() > distanceThreshold;
+    final bool isPastThreshold = _xController.value.abs() >= distanceThreshold;
 
     if (isPastThreshold && !_hasTriggeredHaptic) {
       HapticFeedback.mediumImpact();
@@ -117,23 +117,24 @@ class _SwipeableCardState extends State<SwipeableCard>
 
     final double dx = _xController.value;
     final double vx = details.velocity.pixelsPerSecond.dx;
+    final double vy = details.velocity.pixelsPerSecond.dy;
 
     bool isCommit = false;
     bool isLeft = false;
 
     // Evaluate release decision using both distance and velocity
-    if (dx.abs() > distanceThreshold) {
-      isCommit = true;
-      isLeft = dx < 0;
-    } else if (vx.abs() > velocityThreshold) {
+    if (vx.abs() > velocityThreshold) {
       isCommit = true;
       isLeft = vx < 0;
+    } else if (dx.abs() > distanceThreshold) {
+      isCommit = true;
+      isLeft = dx < 0;
     }
 
     if (isCommit) {
-      _runFlyOutAnimation(left: isLeft, velocity: vx);
+      _runFlyOutAnimation(left: isLeft, velocityX: vx, velocityY: vy);
     } else {
-      _runSpringBackAnimation(velocityX: vx, velocityY: details.velocity.pixelsPerSecond.dy);
+      _runSpringBackAnimation(velocityX: vx, velocityY: vy);
     }
   }
 
@@ -177,7 +178,11 @@ class _SwipeableCardState extends State<SwipeableCard>
     });
   }
 
-  void _runFlyOutAnimation({required bool left, required double velocity}) {
+  void _runFlyOutAnimation({
+    required bool left,
+    required double velocityX,
+    required double velocityY,
+  }) {
     setState(() {
       _isAnimating = true;
     });
@@ -197,7 +202,7 @@ class _SwipeableCardState extends State<SwipeableCard>
       spring,
       _xController.value,
       targetX,
-      velocity,
+      velocityX,
     );
 
     // Let the Y coordinate quickly spring back to center horizontally as it exits
@@ -205,7 +210,7 @@ class _SwipeableCardState extends State<SwipeableCard>
       spring,
       _yController.value,
       0.0,
-      0.0,
+      velocityY,
     );
 
     Future.wait([
@@ -231,6 +236,7 @@ class _SwipeableCardState extends State<SwipeableCard>
       onPanStart: _onPanStart,
       onPanUpdate: _onPanUpdate,
       onPanEnd: _onPanEnd,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedBuilder(
         animation: Listenable.merge([_xController, _yController]),
         builder: (context, child) {
@@ -238,16 +244,29 @@ class _SwipeableCardState extends State<SwipeableCard>
           final y = _yController.value;
 
           // Compute responsive rotation based on horizontal travel: 
-          // rotation is proportional to horizontal offset
-          final rotation = x / (screenWidth * 10);
+          // rotation is proportional to horizontal offset (around 25 degrees max at screen boundary)
+          final rotation = (x / screenWidth) * 0.45;
 
-          // Calculate stamp opacities
+          // Calculate stamp progress and opacities
           double rightOpacity = 0.0;
           double leftOpacity = 0.0;
+          double progress = 0.0;
+          bool isCommitted = false;
+
           if (x > 0) {
-            rightOpacity = (x / distanceThreshold).clamp(0.0, 1.0);
+            progress = (x / distanceThreshold).clamp(0.0, 1.0);
+            rightOpacity = progress;
+            isCommitted = x >= distanceThreshold;
           } else if (x < 0) {
-            leftOpacity = (-x / distanceThreshold).clamp(0.0, 1.0);
+            progress = (-x / distanceThreshold).clamp(0.0, 1.0);
+            leftOpacity = progress;
+            isCommitted = -x >= distanceThreshold;
+          }
+
+          if (isCommitted) {
+            rightOpacity = 1.0;
+            leftOpacity = 1.0;
+            progress = 1.0;
           }
 
           return Transform.translate(
@@ -258,36 +277,46 @@ class _SwipeableCardState extends State<SwipeableCard>
                 clipBehavior: Clip.none,
                 children: [
                   widget.child,
-                  // LEFT STAMP ("NEEDS PRACTICE")
+                  // LEFT STAMP ("✕ NEEDS PRACTICE")
                   if (leftOpacity > 0.0)
                     Positioned(
                       top: 40.h,
                       right: 20.w,
                       child: Opacity(
                         opacity: leftOpacity,
-                        child: Transform.rotate(
-                          angle: -0.2,
-                          child: _buildStamp(
-                            text: 'NEEDS PRACTICE',
-                            icon: Icons.cancel_outlined,
-                            color: AppColors.error,
+                        child: Transform.translate(
+                          offset: Offset(20.w * (1.0 - progress), 0),
+                          child: Transform.rotate(
+                            angle: -0.15,
+                            child: _buildStamp(
+                              text: '✕ NEEDS PRACTICE',
+                              icon: Icons.cancel_outlined,
+                              color: AppColors.error,
+                              progress: progress,
+                              isCommitted: isCommitted,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  // RIGHT STAMP ("KNOWN")
+                  // RIGHT STAMP ("✓ KNOWN")
                   if (rightOpacity > 0.0)
                     Positioned(
                       top: 40.h,
                       left: 20.w,
                       child: Opacity(
                         opacity: rightOpacity,
-                        child: Transform.rotate(
-                          angle: 0.2,
-                          child: _buildStamp(
-                            text: 'KNOWN',
-                            icon: Icons.check_circle_outline_rounded,
-                            color: AppColors.success,
+                        child: Transform.translate(
+                          offset: Offset(-20.w * (1.0 - progress), 0),
+                          child: Transform.rotate(
+                            angle: 0.15,
+                            child: _buildStamp(
+                              text: '✓ KNOWN',
+                              icon: Icons.check_circle_outline_rounded,
+                              color: AppColors.success,
+                              progress: progress,
+                              isCommitted: isCommitted,
+                            ),
                           ),
                         ),
                       ),
@@ -305,29 +334,53 @@ class _SwipeableCardState extends State<SwipeableCard>
     required String text,
     required IconData icon,
     required Color color,
+    required double progress,
+    required bool isCommitted,
   }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      decoration: BoxDecoration(
-        border: Border.all(color: color, width: 3.r),
-        borderRadius: BorderRadius.circular(12.r),
-        color: color.withValues(alpha: 0.15),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 24.r),
-          SizedBox(width: 8.w),
-          Text(
-            text,
-            style: TextStyle(
-              color: color,
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.5,
-            ),
+    final double borderWidth = isCommitted ? 4.r : (1.5.r + 1.5.r * progress);
+    final Color stampColor = isCommitted ? Colors.white : color;
+    final Color backgroundColor = isCommitted 
+        ? color.withValues(alpha: 0.95) 
+        : color.withValues(alpha: 0.15 * progress);
+    final double scale = isCommitted ? 1.05 : (0.85 + 0.15 * progress);
+
+    return Transform.scale(
+      scale: scale,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          border: Border.all(
+            color: isCommitted ? Colors.white : color,
+            width: borderWidth,
           ),
-        ],
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: isCommitted
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.4),
+                    blurRadius: 12.r,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: stampColor, size: 24.r),
+            SizedBox(width: 8.w),
+            Text(
+              text,
+              style: TextStyle(
+                color: stampColor,
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
