@@ -75,12 +75,15 @@ lib/
    - On drag update, horizontal (`x`) and vertical (`y`) offsets are directly incremented 1:1 on unbounded `AnimationController`s (`_xController` and `_yController`), preventing expensive rebuilds of parent widgets.
 2. **Proportional Rotation**:
    - The card's rotation angle (in radians) is calculated dynamically based on horizontal translation:
-     $$\text{rotation} = \frac{\text{xOffset}}{\text{screenWidth} \times 10}$$
+     $$\text{rotation} = \frac{\text{xOffset}}{\text{screenWidth}} \times 0.45$$
 3. **Commit Decision**:
-   - Evaluated on finger release (`onPanEnd`):
-     - **Distance Condition**: Swiped distance exceeds $35\%$ of screen width.
-     - **Velocity Condition**: Release horizontal velocity exceeds $800.0\text{ px/sec}$ in the direction of the drag.
-     - A swipe commits if **either** condition is met, enabling natural flicks.
+   - Evaluated on finger release (`onPanEnd`) using clear configuration constants defined in `SwipeableCard`:
+     - **Distance Threshold Ratio (`SwipeableCard.distanceThresholdRatio = 0.35`)**: Commits if the swiped distance exceeds $35\%$ of the screen width.
+     - **Velocity Threshold (`SwipeableCard.velocityThreshold = 800.0` px/sec)**: Commits if the release horizontal velocity exceeds $800.0\text{ px/sec}$.
+   - **Combined Decision Tree**:
+     - A **short, high-velocity flick** (e.g. displacement is only $10\%$, but release velocity is $> 800\text{ px/sec}$) commits immediately, executing a fast physics-based fly-away.
+     - A **long, slow swipe** (e.g. displacement is $> 35\%$, but release velocity is very low) commits and flies away.
+     - A **short, low-velocity drag** (e.g. displacement is $< 35\%$ and release velocity is $\le 800\text{ px/sec}$) fails to commit and bounces back to center via spring simulation.
 
 ---
 
@@ -91,14 +94,14 @@ All animations in `SwipeableCard` use Flutter's native `SpringSimulation` to mod
 Bounces the card back to the exact center $(0, 0)$ when released under the threshold:
 - **Mass ($m$)**: `1.0`
 - **Stiffness ($k$)**: `180.0`
-- **Damping ratio ($\zeta$)**: `15.0`
-- *Reasoning*: A stiffness of `180.0` produces a snappy return. A damping ratio of `15.0` is underdamped relative to critical damping ($2\sqrt{mk} \approx 26.8$), providing a bouncy, natural physical settling animation.
+- **Damping Coefficient ($c$)**: `15.0`
+- *Reasoning*: A stiffness of `180.0` produces a snappy return. A damping coefficient of `15.0` is underdamped relative to critical damping ($2\sqrt{mk} \approx 26.8$), providing a bouncy, natural physical settling animation.
 
 ### 2. Fly-away (Committed)
 Launches the card off-screen when committed:
 - **Mass ($m$)**: `1.0`
 - **Stiffness ($k$)**: `150.0`
-- **Damping ratio ($\zeta$)**: `20.0`
+- **Damping Coefficient ($c$)**: `20.0`
 - *Reasoning*: A slightly lower stiffness and higher damping ensures the card exits smoothly without oscillating back onto the screen.
 - *Velocity Handoff*: The simulation is initialized with the user's actual release velocity (`vx`), ensuring a harder flick produces a faster, continuous exit animation.
 
