@@ -23,6 +23,10 @@ class SwipeableCard extends StatefulWidget {
   final SwipeableCardController? controller;
   final ValueNotifier<double>? dragXNotifier;
 
+  // Swipe physics constants
+  static const double distanceThresholdRatio = 0.35;
+  static const double velocityThreshold = 800.0;
+
   const SwipeableCard({
     super.key,
     required this.child,
@@ -97,7 +101,7 @@ class _SwipeableCardState extends State<SwipeableCard>
 
     // Check haptic feedback condition
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double distanceThreshold = screenWidth * 0.35;
+    final double distanceThreshold = screenWidth * SwipeableCard.distanceThresholdRatio;
     final bool isPastThreshold = _xController.value.abs() >= distanceThreshold;
 
     if (isPastThreshold && !_hasTriggeredHaptic) {
@@ -112,8 +116,8 @@ class _SwipeableCardState extends State<SwipeableCard>
     if (_isAnimating) return;
 
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double distanceThreshold = screenWidth * 0.35;
-    final double velocityThreshold = 800.0;
+    final double distanceThreshold = screenWidth * SwipeableCard.distanceThresholdRatio;
+    final double velocityThreshold = SwipeableCard.velocityThreshold;
 
     final double dx = _xController.value;
     final double vx = details.velocity.pixelsPerSecond.dx;
@@ -230,7 +234,7 @@ class _SwipeableCardState extends State<SwipeableCard>
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double distanceThreshold = screenWidth * 0.35;
+    final double distanceThreshold = screenWidth * SwipeableCard.distanceThresholdRatio;
 
     return GestureDetector(
       onPanStart: _onPanStart,
