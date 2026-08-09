@@ -133,7 +133,7 @@ class SessionScreen extends GetView<SessionViewModel> {
 
                   final List<Widget> stackChildren = [];
 
-                  // Underneath card 2 (deepest)
+                  ///-------------------------------- Underneath card 2 (deepest) --------------------------------
                   if (cardsIndex + 2 < cards.length) {
                     stackChildren.add(
                       ValueListenableBuilder<double>(
@@ -143,7 +143,7 @@ class SessionScreen extends GetView<SessionViewModel> {
                           final double threshold = screenWidth * 0.35;
                           final double progress = (dragX.abs() / threshold).clamp(0.0, 1.0);
 
-                          // Interpolate visual stack parameters
+                          ///---------------------------- Interpolate visual stack parameters --------------------------------
                           final double scale = 0.90 + 0.05 * progress;
                           final double yOffset = 16.h - 8.h * progress;
                           final double opacity = 0.5 + 0.3 * progress;
@@ -168,7 +168,7 @@ class SessionScreen extends GetView<SessionViewModel> {
                     );
                   }
 
-                  // Underneath card 1 (middle)
+                  ///-------------------------------- Underneath card 1 (middle) --------------------------------
                   if (cardsIndex + 1 < cards.length) {
                     stackChildren.add(
                       ValueListenableBuilder<double>(
@@ -178,7 +178,7 @@ class SessionScreen extends GetView<SessionViewModel> {
                           final double threshold = screenWidth * 0.35;
                           final double progress = (dragX.abs() / threshold).clamp(0.0, 1.0);
 
-                          // Interpolate visual stack parameters
+                          ///------------------------------- Interpolate visual stack parameters --------------------------------
                           final double scale = 0.95 + 0.05 * progress;
                           final double yOffset = 8.h - 8.h * progress;
                           final double opacity = 0.8 + 0.2 * progress;
@@ -203,7 +203,7 @@ class SessionScreen extends GetView<SessionViewModel> {
                     );
                   }
 
-                  // Top card (swipeable)
+                  ///-------------------------------- Top card (swipeable) --------------------------------
                   final topCard = cards[cardsIndex];
                   stackChildren.add(
                     SwipeableCard(

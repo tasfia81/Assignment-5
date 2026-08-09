@@ -153,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Badge & Card Count
+              ///-------------------------------- Badge & Card Count --------------------------------
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -194,14 +194,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SizedBox(height: 16.h),
               
-              // Deck Name
+              ///-------------------------------- Deck Name --------------------------------
               Text(
                 deck.name,
                 style: AppTextStyles.h3,
               ),
               SizedBox(height: 8.h),
               
-              // Deck Description
+              ///-------------------------------- Deck Description --------------------------------
               Text(
                 deck.description,
                 style: AppTextStyles.bodyMedium,
@@ -210,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SizedBox(height: 20.h),
               
-              // Action Button Row
+              ///-------------------------------- Action Button Row --------------------------------
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
