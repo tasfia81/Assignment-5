@@ -140,7 +140,7 @@ class SessionScreen extends GetView<SessionViewModel> {
                         valueListenable: dragXNotifier,
                         builder: (context, dragX, child) {
                           final double screenWidth = MediaQuery.of(context).size.width;
-                          final double threshold = screenWidth * 0.35;
+                          final double threshold = screenWidth * SwipeableCard.distanceThresholdRatio;
                           final double progress = (dragX.abs() / threshold).clamp(0.0, 1.0);
 
                           ///---------------------------- Interpolate visual stack parameters --------------------------------
@@ -175,7 +175,7 @@ class SessionScreen extends GetView<SessionViewModel> {
                         valueListenable: dragXNotifier,
                         builder: (context, dragX, child) {
                           final double screenWidth = MediaQuery.of(context).size.width;
-                          final double threshold = screenWidth * 0.35;
+                          final double threshold = screenWidth * SwipeableCard.distanceThresholdRatio;
                           final double progress = (dragX.abs() / threshold).clamp(0.0, 1.0);
 
                           ///---------------------------- Interpolate visual stack parameters --------------------------------
@@ -210,7 +210,7 @@ class SessionScreen extends GetView<SessionViewModel> {
                         valueListenable: dragXNotifier,
                         builder: (context, dragX, child) {
                           final double screenWidth = MediaQuery.of(context).size.width;
-                          final double threshold = screenWidth * 0.35;
+                          final double threshold = screenWidth * SwipeableCard.distanceThresholdRatio;
                           final double progress = (dragX.abs() / threshold).clamp(0.0, 1.0);
 
                           ///------------------------------- Interpolate visual stack parameters --------------------------------
