@@ -13,6 +13,7 @@ class GlassContainer extends StatelessWidget {
   final Color? glowColor;
   final bool hasGlow;
   final double borderWidth;
+  final bool enableBlur;
 
   const GlassContainer({
     super.key,
@@ -25,10 +26,31 @@ class GlassContainer extends StatelessWidget {
     this.glowColor,
     this.hasGlow = false,
     this.borderWidth = 1.0,
+    this.enableBlur = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final cardContent = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.surface.withValues(alpha: 0.65),
+            AppColors.surface.withValues(alpha: 0.4),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(borderRadius.r),
+        border: Border.all(
+          color: AppColors.border.withValues(alpha: 0.5),
+          width: borderWidth,
+        ),
+      ),
+      child: child,
+    );
+
     return Container(
       width: width,
       height: height,
@@ -47,28 +69,12 @@ class GlassContainer extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius.r),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.surface.withValues(alpha: 0.65),
-                  AppColors.surface.withValues(alpha: 0.4),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(borderRadius.r),
-              border: Border.all(
-                color: AppColors.border.withValues(alpha: 0.5),
-                width: borderWidth,
-              ),
-            ),
-            child: child,
-          ),
-        ),
+        child: enableBlur
+            ? BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                child: cardContent,
+              )
+            : cardContent,
       ),
     );
   }

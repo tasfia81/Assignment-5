@@ -118,108 +118,116 @@ class SessionScreen extends GetView<SessionViewModel> {
 
           ///------------------------------------ Card Stack ------------------------------------
           Expanded(
-            child: Obx(() {
-              final cardsIndex = controller.currentCardIndex.value;
-              final cards = controller.activeCards;
-              if (cards.isEmpty || cardsIndex >= cards.length) {
-                return const Center(child: CircularProgressIndicator());
-              }
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 0.68,
+                child: Obx(() {
+                  final cardsIndex = controller.currentCardIndex.value;
+                  final cards = controller.activeCards;
+                  if (cards.isEmpty || cardsIndex >= cards.length) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-              // Create a local dragXNotifier for the active card stack
-              final ValueNotifier<double> dragXNotifier = ValueNotifier<double>(0.0);
+                  // Create a local dragXNotifier for the active card stack
+                  final ValueNotifier<double> dragXNotifier = ValueNotifier<double>(0.0);
 
-              final List<Widget> stackChildren = [];
+                  final List<Widget> stackChildren = [];
 
-              // Underneath card 2 (deepest)
-              if (cardsIndex + 2 < cards.length) {
-                stackChildren.add(
-                  ValueListenableBuilder<double>(
-                    valueListenable: dragXNotifier,
-                    builder: (context, dragX, child) {
-                      final double screenWidth = MediaQuery.of(context).size.width;
-                      final double threshold = screenWidth * 0.35;
-                      final double progress = (dragX.abs() / threshold).clamp(0.0, 1.0);
+                  // Underneath card 2 (deepest)
+                  if (cardsIndex + 2 < cards.length) {
+                    stackChildren.add(
+                      ValueListenableBuilder<double>(
+                        valueListenable: dragXNotifier,
+                        builder: (context, dragX, child) {
+                          final double screenWidth = MediaQuery.of(context).size.width;
+                          final double threshold = screenWidth * 0.35;
+                          final double progress = (dragX.abs() / threshold).clamp(0.0, 1.0);
 
-                      // Interpolate visual stack parameters
-                      final double scale = 0.90 + 0.05 * progress;
-                      final double yOffset = 16.h - 8.h * progress;
-                      final double opacity = 0.5 + 0.3 * progress;
+                          // Interpolate visual stack parameters
+                          final double scale = 0.90 + 0.05 * progress;
+                          final double yOffset = 16.h - 8.h * progress;
+                          final double opacity = 0.5 + 0.3 * progress;
 
-                      return Transform.translate(
-                        offset: Offset(0, yOffset),
-                        child: Transform.scale(
-                          scale: scale,
-                          child: Opacity(
-                            opacity: opacity,
-                            child: child,
-                          ),
+                          return Transform.translate(
+                            offset: Offset(0, yOffset),
+                            child: Transform.scale(
+                              scale: scale,
+                              child: Opacity(
+                                opacity: opacity,
+                                child: child,
+                              ),
+                            ),
+                          );
+                        },
+                        child: FlashCardWidget(
+                          key: ValueKey<String>('${cards[cardsIndex + 2].id}_bg2'),
+                          flashCard: cards[cardsIndex + 2],
+                          enableBlur: false, // Optimisation: disable blur for underneath card
                         ),
-                      );
-                    },
-                    child: FlashCardWidget(
-                      key: ValueKey<String>('${cards[cardsIndex + 2].id}_bg2'),
-                      flashCard: cards[cardsIndex + 2],
-                    ),
-                  ),
-                );
-              }
+                      ),
+                    );
+                  }
 
-              // Underneath card 1 (middle)
-              if (cardsIndex + 1 < cards.length) {
-                stackChildren.add(
-                  ValueListenableBuilder<double>(
-                    valueListenable: dragXNotifier,
-                    builder: (context, dragX, child) {
-                      final double screenWidth = MediaQuery.of(context).size.width;
-                      final double threshold = screenWidth * 0.35;
-                      final double progress = (dragX.abs() / threshold).clamp(0.0, 1.0);
+                  // Underneath card 1 (middle)
+                  if (cardsIndex + 1 < cards.length) {
+                    stackChildren.add(
+                      ValueListenableBuilder<double>(
+                        valueListenable: dragXNotifier,
+                        builder: (context, dragX, child) {
+                          final double screenWidth = MediaQuery.of(context).size.width;
+                          final double threshold = screenWidth * 0.35;
+                          final double progress = (dragX.abs() / threshold).clamp(0.0, 1.0);
 
-                      // Interpolate visual stack parameters
-                      final double scale = 0.95 + 0.05 * progress;
-                      final double yOffset = 8.h - 8.h * progress;
-                      final double opacity = 0.8 + 0.2 * progress;
+                          // Interpolate visual stack parameters
+                          final double scale = 0.95 + 0.05 * progress;
+                          final double yOffset = 8.h - 8.h * progress;
+                          final double opacity = 0.8 + 0.2 * progress;
 
-                      return Transform.translate(
-                        offset: Offset(0, yOffset),
-                        child: Transform.scale(
-                          scale: scale,
-                          child: Opacity(
-                            opacity: opacity,
-                            child: child,
-                          ),
+                          return Transform.translate(
+                            offset: Offset(0, yOffset),
+                            child: Transform.scale(
+                              scale: scale,
+                              child: Opacity(
+                                opacity: opacity,
+                                child: child,
+                              ),
+                            ),
+                          );
+                        },
+                        child: FlashCardWidget(
+                          key: ValueKey<String>('${cards[cardsIndex + 1].id}_bg1'),
+                          flashCard: cards[cardsIndex + 1],
+                          enableBlur: false, // Optimisation: disable blur for underneath card
                         ),
-                      );
-                    },
-                    child: FlashCardWidget(
-                      key: ValueKey<String>('${cards[cardsIndex + 1].id}_bg1'),
-                      flashCard: cards[cardsIndex + 1],
+                      ),
+                    );
+                  }
+
+                  // Top card (swipeable)
+                  final topCard = cards[cardsIndex];
+                  stackChildren.add(
+                    SwipeableCard(
+                      key: ValueKey<String>('${topCard.id}_swipe'),
+                      controller: _swipeController,
+                      dragXNotifier: dragXNotifier,
+                      onSwipeLeft: () => controller.markAsNeedsPractice(topCard.id),
+                      onSwipeRight: () => controller.markAsKnown(topCard.id),
+                      child: FlashCardWidget(
+                        key: ValueKey<String>(topCard.id),
+                        flashCard: topCard,
+                        enableBlur: true, // Keep blur enabled for active card
+                      ),
                     ),
-                  ),
-                );
-              }
+                  );
 
-              // Top card (swipeable)
-              final topCard = cards[cardsIndex];
-              stackChildren.add(
-                SwipeableCard(
-                  key: ValueKey<String>('${topCard.id}_swipe'),
-                  controller: _swipeController,
-                  dragXNotifier: dragXNotifier,
-                  onSwipeLeft: () => controller.markAsNeedsPractice(topCard.id),
-                  onSwipeRight: () => controller.markAsKnown(topCard.id),
-                  child: FlashCardWidget(
-                    key: ValueKey<String>(topCard.id),
-                    flashCard: topCard,
-                  ),
-                ),
-              );
-
-              return Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: stackChildren,
-              );
-            }),
+                  return Stack(
+                    alignment: Alignment.center,
+                    clipBehavior: Clip.none,
+                    children: stackChildren,
+                  );
+                }),
+              ),
+            ),
           ),
           SizedBox(height: 24.h),
 

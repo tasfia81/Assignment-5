@@ -9,10 +9,12 @@ import 'glass_container.dart';
 
 class FlashCardWidget extends StatefulWidget {
   final FlashCard flashCard;
+  final bool enableBlur;
 
   const FlashCardWidget({
     super.key,
     required this.flashCard,
+    this.enableBlur = true,
   });
 
   @override
@@ -67,6 +69,34 @@ class _FlashCardWidgetState extends State<FlashCardWidget>
 
   @override
   Widget build(BuildContext context) {
+    // Optimisation: Pre-build card sides once outside of AnimatedBuilder.
+    // This avoids rebuilding complex subtrees (text layouts, decorators)
+    // on every animation frame during the Y-rotation flip.
+    final Widget frontCard = _buildCardSide(
+      label: 'QUESTION',
+      content: widget.flashCard.question,
+      hint: 'TAP TO REVEAL ANSWER',
+      labelColor: AppColors.textMuted,
+      contentStyle: AppTextStyles.cardQuestion,
+      glowColor: AppColors.primary.withValues(alpha: 0.4),
+      enableBlur: widget.enableBlur,
+    );
+
+    final Widget backCard = Transform(
+      // Rotate the back widget by pi Y axis to prevent horizontal mirroring
+      transform: Matrix4.identity()..rotateY(pi),
+      alignment: Alignment.center,
+      child: _buildCardSide(
+        label: 'ANSWER',
+        content: widget.flashCard.answer,
+        hint: 'TAP TO SEE QUESTION',
+        labelColor: AppColors.primaryLight,
+        contentStyle: AppTextStyles.cardAnswer,
+        glowColor: AppColors.primaryLight.withValues(alpha: 0.4),
+        enableBlur: widget.enableBlur,
+      ),
+    );
+
     return GestureDetector(
       onTap: _handleTap,
       behavior: HitTestBehavior.opaque,
@@ -84,28 +114,7 @@ class _FlashCardWidgetState extends State<FlashCardWidget>
           return Transform(
             transform: transform,
             alignment: Alignment.center,
-            child: isFront
-                ? _buildCardSide(
-                    label: 'QUESTION',
-                    content: widget.flashCard.question,
-                    hint: 'TAP TO REVEAL ANSWER',
-                    labelColor: AppColors.textMuted,
-                    contentStyle: AppTextStyles.cardQuestion,
-                    glowColor: AppColors.primary.withValues(alpha: 0.4),
-                  )
-                : Transform(
-                    // Rotate the back widget by pi around Y axis to prevent horizontal mirroring
-                    transform: Matrix4.identity()..rotateY(pi),
-                    alignment: Alignment.center,
-                    child: _buildCardSide(
-                      label: 'ANSWER',
-                      content: widget.flashCard.answer,
-                      hint: 'TAP TO SEE QUESTION',
-                      labelColor: AppColors.primaryLight,
-                      contentStyle: AppTextStyles.cardAnswer,
-                      glowColor: AppColors.primaryLight.withValues(alpha: 0.4),
-                    ),
-                  ),
+            child: isFront ? frontCard : backCard,
           );
         },
       ),
@@ -119,12 +128,14 @@ class _FlashCardWidgetState extends State<FlashCardWidget>
     required Color labelColor,
     required TextStyle contentStyle,
     required Color glowColor,
+    required bool enableBlur,
   }) {
     return GlassContainer(
       width: double.infinity,
       height: double.infinity,
       hasGlow: true,
       glowColor: glowColor,
+      enableBlur: enableBlur,
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
